@@ -1,0 +1,14 @@
+﻿{
+  "name": "blinkit-3d-dashboard",
+  "version": "2.0.0",
+  "description": "Blinkit Quick Commerce Analytics Dashboard with Express and SQLite Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

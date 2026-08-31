@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blinkit 3D Live Analytics Enterprise Portal</title>
+  <meta name="description" content="Blinkit Enterprise — 3D WebGL interactive live analytics portal with 6 specialized domain dashboards." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- THREE.JS 3D BACKGROUND CANVAS                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<canvas id="three-canvas"></canvas>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- LOGIN SCREEN                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="auth-wrapper" id="view-login">
+  <div class="auth-card">
+    <div class="auth-logo-wrap">
+      <div class="auth-logo">blinkit</div>
+      <div class="auth-badge">🟡 3D Live Portal · Enterprise Analytics</div>
+    </div>
+    <div class="auth-subtitle">Sign in to access 6 specialized domain dashboards powered by live data streaming</div>
+
+    <div class="auth-divider"></div>
+
+    <form id="login-form" class="auth-form">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input id="login-email" class="form-input" type="email" placeholder="rohanwaghmare447@gmail.com" value="rohanwaghmare447@gmail.com" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input id="login-password" type="password" class="form-input" placeholder="••••••••" value="Pass@123" required />
+      </div>
+      <div class="form-error" id="login-error"></div>
+      <button type="submit" class="btn-auth-submit">🚀 Sign In to 3D Dashboard</button>
+    </form>
+
+    <div class="demo-section" style="margin-top:20px;">
+      <div class="demo-label">1-Click Demo Login</div>
+      <button class="btn-demo-user" id="btn-demo-admin">
+        <span class="demo-icon">👑</span>
+        <div>
+          <span class="demo-name">Rohan Waghmare</span>
+          <span class="demo-role">Head of Analytics · Full Access</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- AUTHENTICATED APP                                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="app-wrapper" id="view-app" style="display:none;">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-logo">blinkit</span>
+      <span class="brand-live-dot"></span>
+      <span class="brand-label">Live Analytics Engine</span>
+    </div>
+
+    <div class="topbar-controls">
+      <span class="clock-badge" id="live-clock">00:00:00</span>
+      <button class="btn-live-toggle" id="btn-stream-toggle">
+        <span class="live-dot"></span> LIVE
+      </button>
+      <button class="btn-sm" id="btn-export-global">📥 Export Report</button>
+    </div>
+
+    <div class="user-pill">
+      <div class="user-avatar" id="topbar-avatar">RW</div>
+      <div class="user-info-text">
+        <div class="user-name" id="topbar-name">Rohan Waghmare</div>
+        <div class="user-role-label" id="topbar-role">Head of Analytics</div>
+      </div>
+      <button class="btn-signout" id="btn-logout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="sidebar-section-label">Analytics Suite</div>
+
+      <button class="sidebar-link active" data-dash="dash-sales">
+        <span class="sidebar-icon">📈</span> Sales Overview
+        <span class="sidebar-badge live">LIVE</span>
+      </button>
+      <button class="sidebar-link" data-dash="dash-delivery">
+        <span class="sidebar-icon">⚡</span> Order & Delivery
+      </button>
+      <button class="sidebar-link" data-dash="dash-customers">
+        <span class="sidebar-icon">👥</span> Customer Insights
+      </button>
+      <button class="sidebar-link" data-dash="dash-product">
+        <span class="sidebar-icon">🛍️</span> Product / Category
+      </button>
+      <button class="sidebar-link" data-dash="dash-regional">
+        <span class="sidebar-icon">🗺️</span> Regional / Stores
+      </button>
+      <button class="sidebar-link" data-dash="dash-inventory">
+        <span class="sidebar-icon">📦</span> Inventory & Supply
+      </button>
+
+      <div class="sidebar-section-label" style="margin-top:12px;">Quick Stats</div>
+      <div style="padding: 12px; background: rgba(255,208,0,0.06); border-radius: 12px; border: 1px solid rgba(255,208,0,0.15); margin: 0 4px;">
+        <div style="font-size:10.5px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;font-weight:800;margin-bottom:10px;">Today's Summary</div>
+        <div class="metric-row">
+          <span class="metric-row-label" style="font-size:11.5px;">💰 Revenue</span>
+          <span class="metric-row-val" style="font-size:12px;">₹1.42 Cr</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-row-label" style="font-size:11.5px;">📦 Orders</span>
+          <span class="metric-row-val" style="font-size:12px;" id="sidebar-orders-count">1,042</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-row-label" style="font-size:11.5px;">⚡ Avg Time</span>
+          <span class="metric-row-val" style="font-size:12px;color:var(--green)">8.3 min</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 1: SALES OVERVIEW                    -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view active" id="dash-sales">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">📈 Sales Overview</div>
+            <div class="page-subtitle">Real-time revenue, order volume, and growth analytics</div>
+          </div>
+          <div class="page-actions">
+            <div class="pill-group">
+              <button class="pill-btn active" data-tf="daily">Daily</button>
+              <button class="pill-btn" data-tf="weekly">Weekly</button>
+              <button class="pill-btn" data-tf="monthly">Monthly</button>
+              <button class="pill-btn" data-tf="quarterly">Quarterly</button>
+            </div>
+            <button class="btn-sm" id="btn-export-sales">📥 CSV</button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value" id="so-revenue">₹42.6 Cr</div>
+            <div class="kpi-delta up">▲ 18.7% YoY growth</div>
+          </div>
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Total Orders</div>
+            <div class="kpi-value" id="so-orders">284,329</div>
+            <div class="kpi-delta up">▲ 12.4% order volume</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Avg Order Value (AOV)</div>
+            <div class="kpi-value" id="so-aov">₹485</div>
+            <div class="kpi-delta neutral">per cart checkout</div>
+          </div>
+          <div class="kpi-card blue-accent">
+            <div class="kpi-label">Gross Profit Margin</div>
+            <div class="kpi-value" style="color:var(--green)">22.4%</div>
+            <div class="kpi-delta up">▲ Healthy profitability</div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="chart-grid-2-1">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Revenue & Orders Trend</div>
+                <div class="card-subtitle">Dual axis — Revenue (₹) vs Order Volume</div>
+              </div>
+            </div>
+            <div class="chart-box h-260"><canvas id="chart-sales-trend"></canvas></div>
+          </div>
+
+          <div class="hero-card">
+            <div class="hero-card-logo">blinkit</div>
+            <div class="hero-card-label">Quick Commerce</div>
+            <div class="hero-card-val" id="hero-rev">₹42.6 Cr</div>
+            <div class="hero-card-sub">FY26 GMV</div>
+            <div style="margin-top:20px;width:100%">
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:6px;opacity:0.7">
+                <span>Target ₹50 Cr</span><span id="hero-pct">85.2%</span>
+              </div>
+              <div style="height:8px;background:rgba(0,0,0,0.25);border-radius:99px;overflow:hidden">
+                <div style="width:85.2%;height:100%;background:#000;border-radius:99px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="chart-grid-3">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Revenue by Category</div>
+                <div class="card-subtitle">Horizontal bar chart</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-sales-category"></canvas></div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">YoY Comparison</div>
+                <div class="card-subtitle">FY25 vs FY26 monthly</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-yoy"></canvas></div>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Order Distribution</div>
+                <div class="card-subtitle">by time of day</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-hourly"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Live Orders Table -->
+        <div class="glass-card">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">🔴 Live Order Stream</div>
+              <div class="card-subtitle">Real-time incoming orders — auto-updating every 3.5s</div>
+            </div>
+            <div class="card-head-right">
+              <input class="search-input" id="orders-search" placeholder="🔍 Search orders..." />
+              <button class="btn-sm" id="btn-pause-feed">⏸ Pause Feed</button>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Order ID</th><th>Customer</th><th>City</th><th>Category</th><th>Items</th><th>Amount</th><th>Status</th><th>⚡ Delivery</th></tr>
+            </thead>
+            <tbody id="live-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 2: ORDER & DELIVERY PERFORMANCE      -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view" id="dash-delivery">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">⚡ Order & Delivery Performance</div>
+            <div class="page-subtitle">Delivery speed, SLA adherence, and fulfillment metrics</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Avg Delivery Time</div>
+            <div class="kpi-value" id="dp-avg-time" style="color:var(--green)">8.3 min</div>
+            <div class="kpi-delta up">▲ Target: &lt; 10 min ✓</div>
+          </div>
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">On-Time Delivery %</div>
+            <div class="kpi-value" id="dp-ontime">96.4%</div>
+            <div class="kpi-delta up">▲ Above SLA benchmark</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Order Fulfillment Rate</div>
+            <div class="kpi-value" id="dp-fulfillment">98.2%</div>
+            <div class="kpi-delta neutral">dark-store SLA</div>
+          </div>
+          <div class="kpi-card red-accent">
+            <div class="kpi-label">Cancellation Rate</div>
+            <div class="kpi-value" id="dp-cancel" style="color:var(--red)">3.6%</div>
+            <div class="kpi-delta down">▼ Mainly out-of-stock</div>
+          </div>
+        </div>
+
+        <div class="chart-grid-1-2">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Order Status Mix</div>
+                <div class="card-subtitle">Doughnut breakdown</div>
+              </div>
+            </div>
+            <div class="chart-box h-240" style="position:relative"><canvas id="chart-dp-donut"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Delivery Speed Distribution</div>
+                <div class="card-subtitle">% of orders by delivery time window</div>
+              </div>
+            </div>
+            <div class="chart-box h-240"><canvas id="chart-dp-speed"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-grid-2">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Weekly SLA Compliance Trend</div>
+                <div class="card-subtitle">On-time % over last 8 weeks</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-dp-sla-trend"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Cancellation Reasons</div>
+                <div class="card-subtitle">Root cause breakdown</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-dp-cancel"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 3: CUSTOMER INSIGHTS                 -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view" id="dash-customers">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">👥 Customer Insights</div>
+            <div class="page-subtitle">Acquisition, retention, lifetime value, and RFM segments</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Active Customers</div>
+            <div class="kpi-value" id="ci-users">123,456</div>
+            <div class="kpi-delta up">▲ 9.1% MoM growth</div>
+          </div>
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">Retention Rate</div>
+            <div class="kpi-value" id="ci-retention">74.2%</div>
+            <div class="kpi-delta up">▲ Repeat shoppers</div>
+          </div>
+          <div class="kpi-card blue-accent">
+            <div class="kpi-label">Lifetime Value (LTV)</div>
+            <div class="kpi-value" id="ci-ltv">₹4,250</div>
+            <div class="kpi-delta neutral">per customer avg</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Order Frequency</div>
+            <div class="kpi-value" id="ci-freq">3.8/mo</div>
+            <div class="kpi-delta up">▲ High engagement</div>
+          </div>
+        </div>
+
+        <div class="chart-grid-2">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">New vs Repeat Customers</div>
+                <div class="card-subtitle">Monthly acquisition cohort</div>
+              </div>
+            </div>
+            <div class="chart-box h-240"><canvas id="chart-ci-cohort"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Customer Composition</div>
+                <div class="card-subtitle">New vs Repeat split</div>
+              </div>
+            </div>
+            <div class="chart-box h-240"><canvas id="chart-ci-donut"></canvas></div>
+          </div>
+        </div>
+
+        <!-- RFM Segments Table -->
+        <div class="glass-card">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">Customer RFM Segmentation</div>
+              <div class="card-subtitle">Recency · Frequency · Monetary behavioral segments</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Segment</th><th>Active Users</th><th>Share %</th><th>Avg Monthly Spend</th><th>Retention %</th><th>Recommendation</th></tr></thead>
+            <tbody>
+              <tr><td><span class="status-badge success">👑 VIP Power Shoppers</span></td><td>24,600</td><td>20%</td><td>₹8,400</td><td style="color:var(--green);font-weight:700">92.4%</td><td>Reward loyalty program</td></tr>
+              <tr><td><span class="status-badge info">🔁 Frequent Buyers</span></td><td>48,200</td><td>39%</td><td>₹4,200</td><td style="color:var(--green);font-weight:700">81.0%</td><td>Push premium memberships</td></tr>
+              <tr><td><span class="status-badge warning">📅 Occasional Buyers</span></td><td>32,100</td><td>26%</td><td>₹1,800</td><td style="color:var(--yellow);font-weight:700">54.2%</td><td>Personalized nudges</td></tr>
+              <tr><td><span class="status-badge error">⚠️ At-Risk Churning</span></td><td>18,556</td><td>15%</td><td>₹650</td><td style="color:var(--red);font-weight:700">28.5%</td><td>Re-engage with discount</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chart-grid-2" style="margin-top:16px;">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Retention Rate Trend</div>
+                <div class="card-subtitle">Monthly cohort retention over time</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-ci-retention"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Churn Risk Distribution</div>
+                <div class="card-subtitle">Days since last order</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-ci-churn"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 4: PRODUCT / CATEGORY ANALYSIS       -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view" id="dash-product">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">🛍️ Product / Category Analysis</div>
+            <div class="page-subtitle">Top-sellers, category performance, discounts, and stock health</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">Top Product Revenue</div>
+            <div class="kpi-value">₹18.4 Cr</div>
+            <div class="kpi-delta up">▲ Grocery dominant</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Promo Sales %</div>
+            <div class="kpi-value" id="pca-promo">18.5%</div>
+            <div class="kpi-delta neutral">Discount-driven sales</div>
+          </div>
+          <div class="kpi-card red-accent">
+            <div class="kpi-label">Avg Discount Rate</div>
+            <div class="kpi-value" id="pca-discount">12.4%</div>
+            <div class="kpi-delta down">Margin impact</div>
+          </div>
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Stock Availability</div>
+            <div class="kpi-value" style="color:var(--green)">98.2%</div>
+            <div class="kpi-delta up">▲ Optimal stock health</div>
+          </div>
+        </div>
+
+        <div class="chart-grid-2">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Category Revenue Breakdown</div>
+                <div class="card-subtitle">Horizontal bar — ₹ Crore by category</div>
+              </div>
+            </div>
+            <div class="chart-box h-260"><canvas id="chart-pca-cat"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Discount Impact Analysis</div>
+                <div class="card-subtitle">Promo vs Regular sales volume</div>
+              </div>
+            </div>
+            <div class="chart-box h-260"><canvas id="chart-pca-promo"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Top Products Table -->
+        <div class="glass-card">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">Top Selling Products Catalog</div>
+              <div class="card-subtitle">Live stock status and sales rank</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Rank</th><th>Product Name</th><th>Category</th><th>Units Sold</th><th>Revenue</th><th>Profit Margin</th><th>Stock Status</th></tr></thead>
+            <tbody id="products-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 5: REGIONAL / STORE PERFORMANCE      -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view" id="dash-regional">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">🗺️ Regional / Dark Store Performance</div>
+            <div class="page-subtitle">City-wise sales, dark store capacity, rider partner network</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Active Delivery Riders</div>
+            <div class="kpi-value" id="rsp-riders">14,250</div>
+            <div class="kpi-delta up">▲ Across 8 cities</div>
+          </div>
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">Avg Partner Speed</div>
+            <div class="kpi-value" id="rsp-speed">7.8 min</div>
+            <div class="kpi-delta up">▲ 0.4 min faster YoY</div>
+          </div>
+          <div class="kpi-card blue-accent">
+            <div class="kpi-label">Rider Rating</div>
+            <div class="kpi-value" id="rsp-rating">4.85 ★</div>
+            <div class="kpi-delta up">▲ Customer satisfaction</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Total Dark Stores</div>
+            <div class="kpi-value">645</div>
+            <div class="kpi-delta neutral">Tier 1 metro cities</div>
+          </div>
+        </div>
+
+        <div class="chart-grid-2">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">City-wise Order Heatmap</div>
+                <div class="card-subtitle">Metro demand concentration</div>
+              </div>
+            </div>
+            <div class="chart-box h-260"><canvas id="chart-rsp-heatmap"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Revenue by Metro City</div>
+                <div class="card-subtitle">Radar chart comparison</div>
+              </div>
+            </div>
+            <div class="chart-box h-260"><canvas id="chart-rsp-radar"></canvas></div>
+          </div>
+        </div>
+
+        <!-- City Performance Table -->
+        <div class="glass-card">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">Metro City & Dark Store Breakdown</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Metro City</th><th>Orders</th><th>Revenue</th><th>Dark Stores</th><th>Avg Speed</th><th>Rider Rating</th><th>Store Utilization</th></tr></thead>
+            <tbody id="cities-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════════════ -->
+      <!-- DASHBOARD 6: INVENTORY & SUPPLY CHAIN          -->
+      <!-- ═══════════════════════════════════════════════ -->
+      <div class="dashboard-view" id="dash-inventory">
+        <div class="page-header">
+          <div class="page-title-wrap">
+            <div class="page-title">📦 Inventory & Supply Chain</div>
+            <div class="page-subtitle">Stock levels, replenishment, damage tracking, warehouse health</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card green-accent">
+            <div class="kpi-label">Available Stock %</div>
+            <div class="kpi-value" id="isc-avail" style="color:var(--green)">94.0%</div>
+            <div class="kpi-delta up">▲ In-stock readiness</div>
+          </div>
+          <div class="kpi-card red-accent">
+            <div class="kpi-label">Damaged Stock %</div>
+            <div class="kpi-value" id="isc-damaged" style="color:var(--red)">6.0%</div>
+            <div class="kpi-delta down">▼ Transit damage</div>
+          </div>
+          <div class="kpi-card yellow-accent">
+            <div class="kpi-label">Restock Frequency</div>
+            <div class="kpi-value" id="isc-restock">4x Daily</div>
+            <div class="kpi-delta neutral">Replenishment rate</div>
+          </div>
+          <div class="kpi-card blue-accent">
+            <div class="kpi-label">Out-of-Stock Rate</div>
+            <div class="kpi-value" id="isc-oos" style="color:var(--blue)">1.8%</div>
+            <div class="kpi-delta up">▲ Low stockout risk</div>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="card-title">Stock Available vs Stock Sold (Monthly)</div>
+              <div class="card-subtitle">9-month trend comparison</div>
+            </div>
+          </div>
+          <div class="chart-box h-260"><canvas id="chart-isc-trend"></canvas></div>
+        </div>
+
+        <div class="chart-grid-3" style="margin-top:16px;">
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Warehouse Health</div>
+                <div class="card-subtitle">Available vs Damaged breakdown</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-isc-health"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Category Stock Levels</div>
+                <div class="card-subtitle">Current stock by category</div>
+              </div>
+            </div>
+            <div class="chart-box h-200"><canvas id="chart-isc-cat"></canvas></div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <div class="card-title">Replenishment KPIs</div>
+              </div>
+            </div>
+            <div class="progress-wrap" style="margin-top:10px">
+              <div class="progress-label-row"><span>Available Stock</span><span style="color:var(--green)">94.0%</span></div>
+              <div class="progress-track"><div class="progress-fill green" style="width:94%"></div></div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label-row"><span>Restock Completion</span><span style="color:var(--yellow)">89.5%</span></div>
+              <div class="progress-track"><div class="progress-fill yellow" style="width:89.5%"></div></div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label-row"><span>Delivery SLA Compliance</span><span style="color:var(--blue)">96.4%</span></div>
+              <div class="progress-track"><div class="progress-fill blue" style="width:96.4%"></div></div>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-label-row"><span>Damaged Stock Threshold</span><span style="color:var(--red)">6.0%</span></div>
+              <div class="progress-track"><div class="progress-fill red" style="width:6%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="modal-title" id="modal-title">Detail</div>
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="three-bg.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

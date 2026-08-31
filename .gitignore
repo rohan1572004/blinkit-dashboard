@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# SQLite database files (will be re-generated on server start)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
