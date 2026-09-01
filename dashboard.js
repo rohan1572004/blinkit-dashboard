@@ -39,6 +39,7 @@ const baseChartOpts = {
 document.addEventListener('DOMContentLoaded', () => {
   initThreeBackground();
   initClock();
+  initExportButtons();
 
   if (activeToken) {
     checkSession().then(ok => ok ? showApp() : showLogin());
@@ -314,14 +315,14 @@ async function generateAndDownloadReport(period = 'daily', format = 'pdf') {
     }
 
     // PDF GENERATION VIA jsPDF
-    if (!window.jspdf || !window.jspdf.jsPDF) {
+    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!jsPDFClass) {
       showToast('⚠️ PDF generator library loading... fallback to CSV', 'error');
       downloadCSV(filename, `Title,${report.title}`);
       return;
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
     // Colors
     const primaryColor = [15, 23, 42];     // Dark Slate #0F172A
