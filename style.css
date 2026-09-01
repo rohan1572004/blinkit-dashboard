@@ -500,30 +500,148 @@ body {
 @keyframes row-flash { 0% { background: rgba(255, 208, 0, 0.1); } 100% { background: transparent; } }
 .new-row { animation: row-flash 1.5s ease-out; }
 
-/* ── MODAL ───────────────────────────────────────────── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 9998; display: none; align-items: center; justify-content: center; }
-.modal-overlay.open { display: flex; }
-.modal-box { background: var(--bg-card); border: 1px solid var(--border-1); border-radius: var(--radius-xl); padding: 30px; max-width: 480px; width: 90vw; box-shadow: 0 40px 80px rgba(0,0,0,0.7); }
-.modal-title { font-size: 18px; font-weight: 800; color: var(--text-1); }
-.modal-close { background: none; border: none; color: var(--text-3); font-size: 22px; cursor: pointer; }
-
-/* ── SEARCH INPUT ────────────────────────────────────── */
-.search-input { background: var(--bg-glass-2); border: 1px solid var(--border-1); border-radius: var(--radius-sm); padding: 7px 13px; color: var(--text-1); font-size: 12.5px; font-family: var(--font-main); outline: none; transition: var(--transition); width: 200px; }
-.search-input:focus { border-color: var(--yellow); }
-.search-input::placeholder { color: var(--text-3); }
-
-/* ── STAT DONUT LABEL ────────────────────────────────── */
-.donut-center-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-
-/* ── RESPONSIVE ──────────────────────────────────────── */
-@media (max-width: 1200px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .chart-grid-3 { grid-template-columns: 1fr 1fr; }
-  .sidebar { display: none; }
+/* ── EXPORT REPORT MODAL & TIMEFRAME SELECTOR ────────── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(4, 5, 10, 0.82);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.25s ease;
 }
-@media (max-width: 768px) {
-  .kpi-grid { grid-template-columns: 1fr; }
-  .chart-grid-2, .chart-grid-1-2, .chart-grid-2-1 { grid-template-columns: 1fr; }
-  .topbar { padding: 12px 16px; }
-  .main-content { padding: 16px; }
+
+.modal-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 208, 0, 0.25);
+  border-radius: var(--radius-xl);
+  max-width: 620px; width: 100%;
+  padding: 32px 30px;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.85), 0 0 50px rgba(255, 208, 0, 0.08);
+  position: relative;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.modal-header-title {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 800; color: var(--text-1);
+}
+
+.modal-header-icon {
+  font-size: 24px;
+}
+
+.modal-close-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-1);
+  border-radius: 50%; width: 34px; height: 34px;
+  color: var(--text-2); font-size: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.modal-close-btn:hover { background: rgba(255,71,87,0.2); color: var(--red); border-color: var(--red); }
+
+.modal-subtitle {
+  font-size: 13px; color: var(--text-2); margin: 16px 0 24px; line-height: 1.5;
+}
+
+.form-section-label {
+  display: block; font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.9px;
+  color: var(--yellow); margin-bottom: 12px;
+}
+
+.report-period-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+
+.period-card {
+  background: var(--bg-glass-2);
+  border: 1.5px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: 16px; cursor: pointer;
+  transition: var(--transition);
+}
+
+.period-card:hover {
+  background: rgba(255, 208, 0, 0.05);
+  border-color: rgba(255, 208, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.period-card.active {
+  background: rgba(255, 208, 0, 0.12);
+  border-color: var(--yellow);
+  box-shadow: 0 0 20px rgba(255, 208, 0, 0.15);
+}
+
+.period-icon { font-size: 24px; margin-bottom: 6px; }
+.period-title { font-size: 14px; font-weight: 800; color: var(--text-1); }
+.period-desc { font-size: 11.5px; color: var(--text-3); margin-top: 3px; line-height: 1.35; }
+
+.format-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+
+.format-card {
+  background: var(--bg-glass-2);
+  border: 1.5px solid var(--border-1);
+  border-radius: var(--radius-md);
+  padding: 14px 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  transition: var(--transition); position: relative;
+}
+
+.format-card:hover {
+  border-color: rgba(255, 208, 0, 0.4);
+}
+
+.format-card.active {
+  background: rgba(255, 208, 0, 0.12);
+  border-color: var(--yellow);
+}
+
+.format-icon { font-size: 22px; }
+.format-title { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.format-subtitle { font-size: 11px; color: var(--text-3); }
+
+.format-badge {
+  position: absolute; top: -8px; right: 12px;
+  background: var(--yellow); color: #000;
+  font-size: 9.5px; font-weight: 800; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px;
+}
+
+.modal-footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--border-1);
+}
+
+.btn-cancel {
+  background: transparent; border: 1px solid var(--border-1);
+  color: var(--text-2); padding: 10px 20px; border-radius: var(--radius-md);
+  font-weight: 600; font-size: 13px; cursor: pointer; transition: var(--transition);
+}
+.btn-cancel:hover { background: rgba(255,255,255,0.06); color: var(--text-1); }
+
+.btn-download {
+  background: var(--yellow); color: #000;
+  border: none; padding: 11px 24px; border-radius: var(--radius-md);
+  font-weight: 800; font-size: 13.5px; cursor: pointer;
+  box-shadow: 0 4px 20px var(--yellow-glow); transition: var(--transition);
+}
+.btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--yellow-glow); }
+.btn-download:active { transform: translateY(0); }

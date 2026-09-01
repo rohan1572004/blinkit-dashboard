@@ -441,6 +441,130 @@ function getOrders({ search = '', status = '' } = {}) {
   return db.prepare(query).all(...params);
 }
 
+function getReportData(timeframe = 'daily') {
+  const allOrders = db.prepare('SELECT * FROM orders ORDER BY timestamp DESC').all();
+  const salesOverview = db.prepare('SELECT * FROM sales_overview ORDER BY month_order ASC').all();
+  const categories = db.prepare('SELECT * FROM categories').all();
+
+  if (timeframe === 'daily') {
+    return {
+      title: 'Blinkit Daily Operations & Sales Report',
+      period: 'Daily',
+      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      summary: {
+        total_revenue: '₹1.42 Cr',
+        total_orders: '9,842',
+        avg_delivery_time: '7.4 min',
+        on_time_pct: '97.8%',
+        fulfillment_rate: '99.1%',
+        active_riders: '14,250',
+        top_city: 'Mumbai (3,240 orders)'
+      },
+      orders: allOrders,
+      category_breakdown: [
+        { category: 'Fruits & Vegetables', revenue: '₹38.4 Lakhs', share: '27%', orders: 2657 },
+        { category: 'Milk & Dairy', revenue: '₹31.2 Lakhs', share: '22%', orders: 2165 },
+        { category: 'Snacks & Munchies', revenue: '₹25.6 Lakhs', share: '18%', orders: 1771 },
+        { category: 'Beverages & Juices', revenue: '₹21.3 Lakhs', share: '15%', orders: 1476 },
+        { category: 'Personal Care & Household', revenue: '₹15.5 Lakhs', share: '11%', orders: 1082 },
+        { category: 'Pharmacy & Packaged', revenue: '₹10.0 Lakhs', share: '7%', orders: 691 }
+      ],
+      delivery_distribution: [
+        { bin: '< 5 min', orders: 3444, percentage: '35%' },
+        { bin: '5-8 min', orders: 4724, percentage: '48%' },
+        { bin: '8-10 min', orders: 1181, percentage: '12%' },
+        { bin: '10-15 min', orders: 393, percentage: '4%' },
+        { bin: '> 15 min', orders: 100, percentage: '1%' }
+      ]
+    };
+  } else if (timeframe === 'weekly') {
+    return {
+      title: 'Blinkit Weekly Performance & Velocity Report',
+      period: 'Weekly',
+      date: 'Last 7 Days (26 Aug - 01 Sep 2026)',
+      summary: {
+        total_revenue: '₹9.8 Cr',
+        total_orders: '64,200',
+        avg_order_value: '₹462',
+        avg_delivery_time: '7.8 min',
+        new_customers: '+4,210',
+        retention_rate: '75.4%'
+      },
+      daily_breakdown: [
+        { day: 'Monday', orders: 8200, revenue: '₹1.26 Cr', avg_time: '7.2 min', on_time: '98.1%' },
+        { day: 'Tuesday', orders: 8900, revenue: '₹1.35 Cr', avg_time: '7.5 min', on_time: '97.6%' },
+        { day: 'Wednesday', orders: 9100, revenue: '₹1.39 Cr', avg_time: '7.4 min', on_time: '97.9%' },
+        { day: 'Thursday', orders: 8700, revenue: '₹1.32 Cr', avg_time: '7.6 min', on_time: '97.4%' },
+        { day: 'Friday', orders: 9500, revenue: '₹1.46 Cr', avg_time: '7.9 min', on_time: '96.8%' },
+        { day: 'Saturday', orders: 9800, revenue: '₹1.51 Cr', avg_time: '8.2 min', on_time: '96.2%' },
+        { day: 'Sunday', orders: 10000, revenue: '₹1.51 Cr', avg_time: '8.4 min', on_time: '95.9%' }
+      ],
+      top_products: [
+        { name: 'Amul Taaza Toned Milk 1L', category: 'Dairy', units: '18,420', revenue: '₹2.21 Cr' },
+        { name: "Lay's Classic Salted Chips 50g", category: 'Snacks', units: '15,630', revenue: '₹1.09 Cr' },
+        { name: 'Organic Robust Bananas 1kg', category: 'Fruits', units: '14,210', revenue: '₹0.85 Cr' },
+        { name: 'Aashirvaad Whole Wheat Atta 5kg', category: 'Groceries', units: '12,880', revenue: '₹1.93 Cr' },
+        { name: 'Red Bull Energy Drink 250ml', category: 'Beverages', units: '11,540', revenue: '₹1.39 Cr' }
+      ]
+    };
+  } else if (timeframe === 'monthly') {
+    return {
+      title: 'Blinkit Monthly Executive Analytics Report',
+      period: 'Monthly',
+      date: 'September 2026 (YTD Comparison)',
+      summary: {
+        total_revenue: '₹42.6 Cr',
+        total_orders: '284,329',
+        mom_growth: '+18.7%',
+        avg_order_value: '₹485',
+        retention_rate: '74.2%',
+        clv: '₹4,250'
+      },
+      monthly_trend: salesOverview.map(r => ({
+        month: r.month,
+        current_year: `₹${(r.current_year * 100).toFixed(1)} Cr`,
+        previous_year: `₹${(r.previous_year * 100).toFixed(1)} Cr`,
+        growth_pct: `+${r.growth_pct}%`
+      })),
+      regional_performance: [
+        { city: 'Mumbai', orders: '52,400', revenue: '₹9.2 Cr', stores: 42, rating: '4.9 ⭐' },
+        { city: 'Delhi NCR', orders: '48,300', revenue: '₹8.4 Cr', stores: 38, rating: '4.8 ⭐' },
+        { city: 'Bangalore', orders: '43,200', revenue: '₹7.8 Cr', stores: 35, rating: '4.9 ⭐' },
+        { city: 'Hyderabad', orders: '31,800', revenue: '₹5.6 Cr', stores: 26, rating: '4.7 ⭐' },
+        { city: 'Chennai', orders: '28,500', revenue: '₹5.1 Cr', stores: 22, rating: '4.8 ⭐' }
+      ]
+    };
+  } else {
+    return {
+      title: 'Blinkit Annual Enterprise Analytics Report',
+      period: 'Yearly',
+      date: 'Financial Year 2026 (YTD)',
+      summary: {
+        annual_revenue: '₹425.8 Cr',
+        total_orders: '2.84 Million',
+        yoy_growth: '+32.5%',
+        active_users: '1.23 Million',
+        active_dark_stores: '163 Stores',
+        stock_availability: '94.0%'
+      },
+      quarterly_overview: [
+        { quarter: 'Q1 (Jan - Mar)', orders: '680,000', revenue: '₹98.2 Cr', growth: '+28.4%' },
+        { quarter: 'Q2 (Apr - Jun)', orders: '740,000', revenue: '₹108.5 Cr', growth: '+31.2%' },
+        { quarter: 'Q3 (Jul - Sep)', orders: '820,000', revenue: '₹124.6 Cr', growth: '+34.8%' },
+        { quarter: 'Q4 (Oct - Dec Proj.)', orders: '900,000', revenue: '₹136.0 Cr', growth: '+35.5%' }
+      ],
+      category_annual: [
+        { category: 'Fruits & Veggies', annual_revenue: '₹115.0 Cr', yoy_growth: '+38%', inventory_health: 'Optimal' },
+        { category: 'Milk & Dairy', annual_revenue: '₹94.0 Cr', yoy_growth: '+35%', inventory_health: 'Optimal' },
+        { category: 'Snacks & Munchies', annual_revenue: '₹78.0 Cr', yoy_growth: '+29%', inventory_health: 'High Turn' },
+        { category: 'Beverages & Juices', annual_revenue: '₹65.0 Cr', yoy_growth: '+26%', inventory_health: 'Optimal' },
+        { category: 'Personal Care & Household', annual_revenue: '₹48.0 Cr', yoy_growth: '+22%', inventory_health: 'Optimal' },
+        { category: 'Pharmacy & Packaged', annual_revenue: '₹25.8 Cr', yoy_growth: '+42%', inventory_health: 'Fast Growth' }
+      ]
+    };
+  }
+}
+
 module.exports = {
   initDatabase,
   authenticateUser,
@@ -459,5 +583,6 @@ module.exports = {
   getFeedbacks,
   addFeedback,
   getCategories,
-  getOrders
+  getOrders,
+  getReportData
 };

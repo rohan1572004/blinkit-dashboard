@@ -226,6 +226,17 @@ app.get('/api/orders', (req, res) => {
   }
 });
 
+// Comprehensive Report Export Data Endpoint (Daily, Weekly, Monthly, Yearly)
+app.get('/api/reports/data', (req, res) => {
+  try {
+    const timeframe = req.query.timeframe || 'daily';
+    const report = db.getReportData(timeframe);
+    res.json({ success: true, data: report });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Serve frontend SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

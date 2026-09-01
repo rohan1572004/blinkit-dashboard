@@ -223,20 +223,391 @@ function initStreamToggle() {
   }
 }
 
+let selectedReportPeriod = 'daily';
+let selectedReportFormat = 'pdf';
+
 function initExportButtons() {
+  const globalExport = document.getElementById('btn-export-global');
   const exportSales = document.getElementById('btn-export-sales');
-  if (exportSales) {
-    exportSales.addEventListener('click', () => {
-      downloadCSV('Blinkit_Sales_Report', 'Metric,Value\nTotal Revenue,₹42.6 Cr\nOrders,284329\nAOV,₹485\nGrowth Rate,+18.7%');
-      showToast('📥 Blinkit_Sales_Report.csv downloaded!');
+  const modal = document.getElementById('modal-export-report');
+  const closeBtn = document.getElementById('btn-close-export-modal');
+  const cancelBtn = document.getElementById('btn-cancel-export');
+  const confirmBtn = document.getElementById('btn-confirm-export');
+
+  function openExportModal() {
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeExportModal() {
+    if (modal) modal.style.display = 'none';
+  }
+
+  if (globalExport) globalExport.addEventListener('click', openExportModal);
+  if (exportSales) exportSales.addEventListener('click', openExportModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeExportModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', closeExportModal);
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeExportModal();
     });
   }
-  const globalExport = document.getElementById('btn-export-global');
-  if (globalExport) {
-    globalExport.addEventListener('click', () => {
-      downloadCSV('Blinkit_Full_Analytics_Report', 'Dashboard,Metric,Value\nSales,Revenue,₹42.6 Cr\nDelivery,Avg Time,8.3 min\nCustomers,LTV,₹4250\nInventory,Stock,94%');
-      showToast('📥 Full analytics report downloaded!');
+
+  const periodCards = document.querySelectorAll('.period-card');
+  periodCards.forEach(card => {
+    card.addEventListener('click', () => {
+      periodCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedReportPeriod = card.dataset.period || 'daily';
     });
+  });
+
+  const formatCards = document.querySelectorAll('.format-card');
+  formatCards.forEach(card => {
+    card.addEventListener('click', () => {
+      formatCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedReportFormat = card.dataset.format || 'pdf';
+      if (confirmBtn) {
+        confirmBtn.querySelector('span').textContent = `📥 Download ${selectedReportFormat.toUpperCase()} Report`;
+      }
+    });
+  });
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', async () => {
+      closeExportModal();
+      showToast(`⚡ Generating ${selectedReportPeriod.toUpperCase()} ${selectedReportFormat.toUpperCase()} report...`);
+      await generateAndDownloadReport(selectedReportPeriod, selectedReportFormat);
+    });
+  }
+}
+
+async function generateAndDownloadReport(period = 'daily', format = 'pdf') {
+  try {
+    const res = await fetch(`/api/reports/data?timeframe=${period}`);
+    const json = await res.json();
+    if (!json.success || !json.data) {
+      showToast('❌ Failed to fetch report data', 'error');
+      return;
+    }
+
+    const report = json.data;
+    const filename = `Blinkit_${period.charAt(0).toUpperCase() + period.slice(1)}_Report_${new Date().toISOString().slice(0, 10)}`;
+
+    if (format === 'csv') {
+      let csvContent = `Report Title,${report.title}\nPeriod,${report.period}\nDate,${report.date}\n\nKEY SUMMARY METRICS\nMetric,Value\n`;
+      for (const [k, v] of Object.entries(report.summary)) {
+        csvContent += `${k.replace(/_/g, ' ').toUpperCase()},"${v}"\n`;
+      }
+
+      if (period === 'daily' && report.orders) {
+        csvContent += `\nDAILY LIVE ORDERS LOG\nOrder ID,Customer,City,Category,Items,Amount,Status,Delivery Time\n`;
+        report.orders.forEach(o => {
+          csvContent += `"${o.id}","${o.customer}","${o.city}","${o.category}",${o.items},₹${o.amount},"${o.status}","${o.delivery_time}"\n`;
+        });
+      }
+
+      downloadCSV(filename, csvContent);
+      showToast(`📥 ${period.toUpperCase()} CSV report downloaded!`, 'success');
+      return;
+    }
+
+    // PDF GENERATION VIA jsPDF
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      showToast('⚠️ PDF generator library loading... fallback to CSV', 'error');
+      downloadCSV(filename, `Title,${report.title}`);
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // Colors
+    const primaryColor = [15, 23, 42];     // Dark Slate #0F172A
+    const yellowAccent = [255, 208, 0];    // Blinkit Yellow #FFD000
+    const textColor = [51, 65, 85];        // Body text
+    const grayBg = [248, 250, 252];        // Light table bg
+
+    // Top Accent Bar & Header Box
+    doc.setFillColor(...yellowAccent);
+    doc.rect(0, 0, 210, 4, 'F');
+
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 4, 210, 32, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(...yellowAccent);
+    doc.text('BLINKIT QUICK COMMERCE ANALYTICS', 14, 16);
+
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text(report.title.toUpperCase(), 14, 23);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(168, 178, 204);
+    doc.text(`Period: ${report.period}  |  Date: ${report.date}  |  Generated by: Rohan Waghmare (Head of Analytics)`, 14, 29);
+
+    let currentY = 44;
+
+    // Executive Summary Table
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...primaryColor);
+    doc.text('EXECUTIVE KPI SUMMARY', 14, currentY);
+    currentY += 4;
+
+    const summaryRows = Object.entries(report.summary).map(([k, v]) => [
+      k.replace(/_/g, ' ').toUpperCase(),
+      String(v)
+    ]);
+
+    doc.autoTable({
+      startY: currentY,
+      head: [['KPI Metric', 'Current Performance Value']],
+      body: summaryRows,
+      theme: 'grid',
+      headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 9, textColor: textColor },
+      alternateRowStyles: { fillColor: grayBg },
+      margin: { left: 14, right: 14 }
+    });
+
+    currentY = doc.lastAutoTable.finalY + 10;
+
+    // Period Specific Detailed Section
+    if (period === 'daily') {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('DAILY LIVE ORDERS LOG & TRANSACTION DETAILS', 14, currentY);
+      currentY += 4;
+
+      const orderRows = (report.orders || []).map(o => [
+        o.id,
+        o.customer,
+        o.city,
+        o.category,
+        `${o.items} items`,
+        `₹${o.amount}`,
+        o.status,
+        o.delivery_time
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Order ID', 'Customer Name', 'City', 'Category', 'Qty', 'Amount', 'Status', 'Delivery Time']],
+        body: orderRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 10;
+
+      if (currentY > 230) { doc.addPage(); currentY = 20; }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('DAILY CATEGORY SALES BREAKDOWN', 14, currentY);
+      currentY += 4;
+
+      const catRows = (report.category_breakdown || []).map(c => [
+        c.category,
+        c.revenue,
+        c.share,
+        c.orders.toLocaleString()
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Category Name', 'Daily Revenue', 'Share %', 'Total Orders']],
+        body: catRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+    } else if (period === 'weekly') {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('7-DAY DAILY SALES & SLA BREAKDOWN', 14, currentY);
+      currentY += 4;
+
+      const weekRows = (report.daily_breakdown || []).map(d => [
+        d.day,
+        d.orders.toLocaleString(),
+        d.revenue,
+        d.avg_time,
+        d.on_time
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Day of Week', 'Order Volume', 'Daily Revenue', 'Avg Delivery Time', 'On-Time SLA %']],
+        body: weekRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 10;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('TOP 5 BESTSELLING PRODUCTS OF THE WEEK', 14, currentY);
+      currentY += 4;
+
+      const prodRows = (report.top_products || []).map(p => [
+        p.name,
+        p.category,
+        p.units,
+        p.revenue
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Product Name', 'Category', 'Units Sold', 'Weekly Revenue']],
+        body: prodRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+    } else if (period === 'monthly') {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('MONTH-OVER-MONTH REVENUE & GROWTH TRENDS', 14, currentY);
+      currentY += 4;
+
+      const monthRows = (report.monthly_trend || []).map(m => [
+        m.month,
+        m.current_year,
+        m.previous_year,
+        m.growth_pct
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Month', 'Current Year (2026)', 'Previous Year (2025)', 'Growth Rate %']],
+        body: monthRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 10;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('REGIONAL CITY & DARK STORE PERFORMANCE', 14, currentY);
+      currentY += 4;
+
+      const regRows = (report.regional_performance || []).map(r => [
+        r.city,
+        r.orders,
+        r.revenue,
+        `${r.stores} Dark Stores`,
+        r.rating
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['City / Region', 'Monthly Orders', 'Monthly Revenue', 'Active Stores', 'Customer Rating']],
+        body: regRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+    } else if (period === 'yearly') {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('ANNUAL QUARTERLY FINANCIAL OVERVIEW', 14, currentY);
+      currentY += 4;
+
+      const qRows = (report.quarterly_overview || []).map(q => [
+        q.quarter,
+        q.orders,
+        q.revenue,
+        q.growth
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Quarter Period', 'Quarterly Orders', 'Quarterly Revenue', 'YoY Growth Rate']],
+        body: qRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+
+      currentY = doc.lastAutoTable.finalY + 10;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(...primaryColor);
+      doc.text('ANNUAL CATEGORY PERFORMANCE & INVENTORY HEALTH', 14, currentY);
+      currentY += 4;
+
+      const catYearRows = (report.category_annual || []).map(ca => [
+        ca.category,
+        ca.annual_revenue,
+        ca.yoy_growth,
+        ca.inventory_health
+      ]);
+
+      doc.autoTable({
+        startY: currentY,
+        head: [['Category Domain', 'Annual Revenue', 'YoY Growth %', 'Stock Health Status']],
+        body: catYearRows,
+        theme: 'grid',
+        headStyles: { fillColor: primaryColor, textColor: yellowAccent, fontStyle: 'bold', fontSize: 8.5 },
+        bodyStyles: { fontSize: 8.5, textColor: textColor },
+        alternateRowStyles: { fillColor: grayBg },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // Page Numbering Footer on All Pages
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(140, 140, 150);
+      doc.text(`Blinkit Quick Commerce Enterprise Analytics · ${period.toUpperCase()} REPORT · Page ${i} of ${totalPages}`, 14, 287);
+      doc.text('Confidential - Internal Executive Use Only', 196, 287, { align: 'right' });
+    }
+
+    doc.save(`${filename}.pdf`);
+    showToast(`📥 ${period.toUpperCase()} PDF Report downloaded successfully!`, 'success');
+
+  } catch (err) {
+    console.error('Report Generation Error:', err);
+    showToast('❌ Error generating report PDF', 'error');
   }
 }
 

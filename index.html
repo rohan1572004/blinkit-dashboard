@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -42,11 +44,10 @@
         <input id="login-password" type="password" class="form-input" placeholder="••••••••" value="Pass@123" required />
       </div>
       <div class="form-error" id="login-error"></div>
-      <button type="submit" class="btn-auth-submit">🚀 Sign In to 3D Dashboard</button>
+      <button type="submit" class="btn-auth-submit">🚀 Sign In</button>
     </form>
 
     <div class="demo-section" style="margin-top:20px;">
-      <div class="demo-label">1-Click Demo Login</div>
       <button class="btn-demo-user" id="btn-demo-admin">
         <span class="demo-icon">👑</span>
         <div>
@@ -675,17 +676,74 @@
   </div>
 </div>
 
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
-
-<!-- Modal -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-box">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div class="modal-title" id="modal-title">Detail</div>
-      <button class="modal-close" id="modal-close-btn">&times;</button>
+<!-- EXPORT REPORT MODAL -->
+<div class="modal-backdrop" id="modal-export-report" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-header-title">
+        <span class="modal-header-icon">📥</span>
+        <span>Export Executive Analytics Report</span>
+      </div>
+      <button class="modal-close-btn" id="btn-close-export-modal">&times;</button>
     </div>
-    <div id="modal-body"></div>
+    
+    <div class="modal-body">
+      <p class="modal-subtitle">Generate a comprehensive, executive-ready PDF report or CSV dataset tailored to your chosen reporting period.</p>
+      
+      <div class="form-group-section">
+        <label class="form-section-label">Select Report Period</label>
+        <div class="report-period-grid">
+          <div class="period-card active" data-period="daily">
+            <div class="period-icon">📅</div>
+            <div class="period-title">Daily Report</div>
+            <div class="period-desc">Live daily order logs, delivery SLA & category metrics</div>
+          </div>
+          <div class="period-card" data-period="weekly">
+            <div class="period-icon">📆</div>
+            <div class="period-title">Weekly Report</div>
+            <div class="period-desc">7-day sales velocity, top items & rider stats</div>
+          </div>
+          <div class="period-card" data-period="monthly">
+            <div class="period-icon">🗓️</div>
+            <div class="period-title">Monthly Report</div>
+            <div class="period-desc">MoM revenue growth, cohorts & regional stores</div>
+          </div>
+          <div class="period-card" data-period="yearly">
+            <div class="period-icon">📊</div>
+            <div class="period-title">Yearly Report</div>
+            <div class="period-desc">Annual financial targets, YoY & inventory turnover</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group-section" style="margin-top:20px;">
+        <label class="form-section-label">Select Format</label>
+        <div class="format-grid">
+          <div class="format-card active" data-format="pdf">
+            <div class="format-icon">📄</div>
+            <div>
+              <div class="format-title">PDF Document (.pdf)</div>
+              <div class="format-subtitle">Formatted multi-page executive report</div>
+            </div>
+            <span class="format-badge">Recommended</span>
+          </div>
+          <div class="format-card" data-format="csv">
+            <div class="format-icon">📊</div>
+            <div>
+              <div class="format-title">CSV Spreadsheet (.csv)</div>
+              <div class="format-subtitle">Raw dataset export</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btn-cancel-export">Cancel</button>
+      <button class="btn-download" id="btn-confirm-export">
+        <span>📥 Download PDF Report</span>
+      </button>
+    </div>
   </div>
 </div>
 
