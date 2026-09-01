@@ -64,6 +64,34 @@ Open your browser at **http://localhost:3000**
 5. Set **Start Command**: `npm start`
 6. Deploy!
 
+## 📦 GitHub, Vercel and Render Quick Deploy
+
+### Push to GitHub (recommended)
+
+Run from your project root:
+
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/blinkit-dashboard.git
+git push -u origin main
+```
+
+### Deploy to Render (API + DB)
+
+1. Create a new Web Service on Render and connect your GitHub repo.
+2. Set the Build Command to `npm install` and Start Command to `npm start`.
+3. Optional: Add an environment variable `PORT` if you want a custom port.
+
+This will deploy the full Express backend. Note: Render's filesystem is ephemeral — the local SQLite DB will persist only while the instance runs.
+
+### Deploy Frontend to Vercel (optional)
+
+If you prefer Vercel for the frontend, split the repo: move `index.html`, `style.css`, `dashboard.js`, `three-bg.js`, and static assets to a `frontend/` folder, then deploy that folder as a static site on Vercel. Configure the frontend to call the Render URL for API requests.
+
+
 ## 📄 License
 
 MIT
